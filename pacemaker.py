@@ -61,7 +61,7 @@ parser.add_argument('-p', '--port', type=int, default=4433,
         help='TCP port to listen on (default %(default)d)')
 # Note: FTP is (Explicit FTPS). Use TLS for Implicit FTPS
 parser.add_argument('-c', '--client', default='tls',
-        choices=['tls', 'mysql', 'ftp', 'smtp', 'imap', 'pop3'],
+        choices=['tls', 'mysql', 'ftp', 'smtp', 'imap', 'pop3', 'xmpp'],
         help='Target client type (default %(default)s)')
 parser.add_argument('-t', '--timeout', type=int, default=3,
         help='Timeout in seconds to wait for a Heartbeat (default %(default)d)')
@@ -124,7 +124,25 @@ def hexdump(data):
         print("{0:04x}: {1:47}  {2}".format(i,
             ' '.join('{0:02x}'.format(c) for c in line),
             ''.join(chr(c) if c >= 32 and c < 127 else '.' for c in line)))
-
+            
+            
+def build_xmpp_conversation(inputFile = "xmppConvo.txt"):
+    #Line by line client/server conversatoin from text, dumps are pretty big for code, and they might be different
+    try:
+        toRet = []
+        with open(inputFile, "r") as xmppFile:
+            expLine = xmppFile.readline()
+            while curLine:
+               respLine = xmppFile.readline()
+               toRet.append((expLine, respLine))
+               expLine = xmppFile.readline()
+               #there can be an empty response with an expectation in this way 
+            close(xmppFile)
+            return toRet
+    except Exception, ex:
+        print "[!] Exception caught trying to build xmpp conversation"
+        print ex
+    
 class Failure(Exception):
     pass
 
@@ -405,9 +423,8 @@ class RequestHandler(socketserver.BaseRequestHandler):
     def prepare_xmpp(self, sock):
         #first, we must recv the client's stream request
         bufsize = 512
-        streamReq = sock.recv(bufsize)
-        streamMsg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' from='xmpp.hpeprint.com' id='%s' version='1.0' xml:lang='en'>" % str(uuid.uuid4())
-        sock.sendall(streamMsg)
+        talk = build_xmpp_conversation()
+        do_conversation('', talk)
 
     def do_conversation(self, greeting, talk):
         '''Helper to handle simple request-response protocols.'''
