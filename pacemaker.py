@@ -401,6 +401,13 @@ class RequestHandler(socketserver.BaseRequestHandler):
                 'Expected ' + exp + ', got ' + data)
             resp += tag + ' OK\r\n'
             sock.sendall(resp.encode('ascii'))
+    
+    def prepare_xmpp(self, sock):
+        #first, we must recv the client's stream request
+        bufsize = 512
+        streamReq = sock.recv(bufsize)
+        streamMsg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' from='xmpp.hpeprint.com' id='%s' version='1.0' xml:lang='en'>" % str(uuid.uuid4())
+        sock.sendall(streamMsg)
 
     def do_conversation(self, greeting, talk):
         '''Helper to handle simple request-response protocols.'''
